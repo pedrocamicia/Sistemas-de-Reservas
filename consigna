@@ -1,0 +1,346 @@
+ENUNCIADO PROFESIONAL — SISTEMA DE RESERVAS DE RECURSOS
+Contexto
+
+Una empresa que presta servicios por turnos necesita un sistema interno para administrar reservas de recursos. Los recursos pueden ser de distinta naturaleza (por ejemplo, espacios, equipamiento, vehículos, turnos con personal, etc.), pero la empresa quiere un modelo común que permita operar sin depender de un tipo específico.
+
+El sistema será utilizado por distintos sectores de la empresa (atención al cliente, operación, administración), y también debe contemplar acciones iniciadas por clientes. El objetivo es evitar conflictos de agenda, mantener trazabilidad, y aplicar políticas comerciales que cambian con el tiempo.
+
+Restricciones técnicas del trabajo:
+
+No hay interfaz gráfica.
+
+No hay persistencia (no base de datos, no archivos).
+
+Todo se mantiene en memoria.
+
+No se modelan usuarios ni autenticación.
+
+No se modela integración con calendario externo.
+
+Objetivos del sistema
+
+El sistema debe permitir:
+
+Gestionar recursos que pueden reservarse en intervalos de tiempo.
+
+Registrar reservas solicitadas y su evolución.
+
+Evitar solapamientos inválidos y estados inconsistentes.
+
+Permitir consultas operativas (disponibilidad, agenda, historial).
+
+Soportar reglas de negocio configurables por políticas internas (sin romper reservas ya registradas).
+
+Alcance funcional
+A) Gestión de clientes
+
+Registrar clientes con datos mínimos de identificación.
+
+Consultar reservas actuales e históricas de un cliente.
+
+Aplicar restricciones sobre el comportamiento de un cliente según su historial (por ejemplo, acumulación de cancelaciones o incumplimientos), sin especificar umbrales exactos.
+
+B) Gestión de recursos
+
+Cada recurso:
+
+Puede tener horarios habilitados y horarios bloqueados (por mantenimiento, feriados, indisponibilidad operativa, etc.).
+
+Puede requerir condiciones previas para reservarse (por ejemplo, “solo con aprobación previa”, “solo clientes frecuentes”, etc.).
+
+Puede tener reglas particulares de duración mínima/máxima o tamaño de bloque (ej.: múltiplos de 30 minutos), según la categoría del recurso.
+
+El sistema debe permitir:
+
+Registrar recursos y sus restricciones operativas.
+
+Consultar agenda de un recurso en un período.
+
+Obtener “ventanas disponibles” dadas restricciones (sin exigir un algoritmo óptimo, pero sí resultados coherentes).
+
+C) Solicitud de reserva
+
+El sistema debe permitir que un cliente solicite una reserva indicando:
+
+Recurso deseado
+
+Intervalo de tiempo (inicio/fin)
+
+Información adicional opcional (comentarios, cantidad de personas, requerimientos especiales)
+
+Reglas generales (mínimas):
+
+Un intervalo debe ser válido.
+
+No deben generarse conflictos de agenda con indisponibilidades del recurso.
+
+Deben considerarse reglas del recurso y del cliente.
+
+Deben contemplarse reservas “en proceso” que todavía no están cerradas, y cómo afectan la disponibilidad.
+
+D) Evolución de una reserva
+
+Una reserva puede atravesar múltiples situaciones a lo largo del tiempo. El sistema debe contemplar como mínimo:
+
+Situaciones previas a la concreción final (por ejemplo “pendiente”, “en verificación”, “pre-reservada”, o equivalentes).
+
+Situaciones finales exitosas (reserva concretada).
+
+Situaciones finales no exitosas (cancelación, expiración, rechazo, etc.).
+
+No todas las transiciones son posibles en cualquier momento. Algunas decisiones deben ser irreversibles.
+
+El sistema debe permitir:
+
+Confirmar una reserva bajo condiciones y plazos definidos por políticas del negocio.
+
+Cancelar una reserva con distintas consecuencias según el momento y el estado (por ejemplo, penalizaciones o bloqueo temporal del cliente; no se implementan pagos, pero sí el concepto de “consecuencia”).
+
+Marcar reservas como no válidas por eventos externos (por ejemplo, recurso fuera de servicio inesperadamente).
+
+Resolver conflictos donde una acción ocurre “casi al mismo tiempo” que otra (por ejemplo, cancelar mientras se confirma).
+
+E) Consultas operativas
+
+El sistema debe permitir consultar:
+
+Disponibilidad de un recurso en un intervalo.
+
+Reservas existentes por recurso y por cliente.
+
+Historial completo de una reserva (incluyendo cambios relevantes).
+
+Agenda diaria/semanal para operación.
+
+Reservas que requieren atención (por ejemplo, pendientes próximas a vencer).
+
+Reglas de negocio y políticas (con zonas grises intencionales)
+1) Solapamiento y conflictos
+
+No puede existir más de una reserva válida para el mismo recurso que se superponga en el tiempo, pero el concepto de “válida” depende de la situación de la reserva.
+
+Debe definirse qué sucede con reservas en estados intermedios respecto a la disponibilidad.
+
+Debe definirse qué ocurre cuando un recurso cambia su disponibilidad (se bloquea un horario) y ya existen reservas en ese período.
+
+2) Límites por cliente
+
+La empresa puede limitar la cantidad de reservas activas por cliente, por día o por tipo de recurso (los criterios exactos se consideran política).
+
+Puede existir un criterio de “incompatibilidad” entre reservas del mismo cliente (por ejemplo, reservas simultáneas, o reservas demasiado cercanas), pero no se especifica la regla exacta.
+
+3) Plazos y vencimientos
+
+Algunas reservas pierden vigencia si no son confirmadas antes de un cierto plazo relativo a su creación o al inicio del intervalo.
+
+Debe contemplarse el paso del tiempo de forma abstracta (sin fechas reales ni relojes del sistema), pero con comportamiento determinista para pruebas.
+
+4) Cambios y modificaciones
+
+Debe definirse bajo qué condiciones una reserva puede modificarse (cambiar horario o recurso) y si eso se considera “misma reserva” o una nueva.
+
+Debe evitarse que una modificación genere inconsistencias con historial o con reglas de conflicto.
+
+5) Excepciones y validaciones
+
+El sistema debe manejar de forma controlada intentos como:
+
+Intervalos inválidos.
+
+Reservar un recurso inexistente o inhabilitado.
+
+Reservas que violan restricciones del recurso.
+
+Acciones incompatibles con la situación actual.
+
+Operaciones sobre reservas expiradas o cerradas.
+
+Doble acción sobre la misma reserva (confirmar dos veces, cancelar dos veces, etc.).
+
+Escenarios límite y situaciones reales (obligatorio contemplarlos)
+
+Último cupo temporal: dos solicitudes distintas intentan ocupar el mismo intervalo para el mismo recurso en secuencia muy cercana.
+
+Recurso fuera de servicio: el recurso se marca como no disponible cuando ya hay reservas próximas.
+
+Pendiente cerca del inicio: una reserva no confirmada se acerca al inicio del turno.
+
+Cancelación tardía: un cliente cancela demasiado cerca del horario reservado.
+
+Reserva “intermedia”: queda en una situación incompleta (por ejemplo, falta verificación de datos) y hay que decidir cómo impacta en la disponibilidad.
+
+Cambio de reglas: una política cambia y afecta nuevas reservas, pero no debe corromper decisiones anteriores.
+
+Reserva superpuesta del mismo cliente: el cliente intenta reservar dos recursos en el mismo horario (la empresa puede permitirlo o no según política).
+
+Modificación vs historial: se modifica el horario de una reserva, luego hay un reclamo y se exige reconstruir qué pasó.
+
+Requisitos no funcionales
+
+Consistencia: el sistema no debe permitir estados imposibles ni solapamientos inválidos según las políticas vigentes.
+
+Trazabilidad: debe poder reconstruirse el ciclo de vida de una reserva y las decisiones relevantes.
+
+Extensibilidad: debe poder agregarse en el futuro: pagos, penalizaciones monetarias, lista de espera, prioridad, usuarios administrativos, sin reescribir el modelo desde cero.
+
+Determinismo: dado el mismo conjunto de entradas y el mismo “estado temporal abstracto”, el resultado debe ser el mismo.
+
+Claridad ante errores: los fallos deben ser distinguibles (no se acepta “falló” genérico).
+
+Entregables esperados
+
+Modelo del dominio y reglas necesarias para soportar los casos planteados.
+
+Definición de comportamientos esperados ante escenarios límite.
+
+Mecanismos para evitar operaciones inválidas y mantener coherencia.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CONSIGNA 2
+1️⃣ Dominio general
+
+La empresa ofrece recursos reservables, por ejemplo:
+
+canchas
+
+salas
+
+turnos
+
+vehículos
+
+equipos
+
+👉 El sistema no depende del tipo de recurso.
+
+2️⃣ Conceptos obligatorios (no negociables)
+📌 Cliente
+
+puede hacer reservas
+
+puede tener varias reservas activas
+
+puede cancelar reservas
+
+📌 Recurso
+
+es reservable
+
+tiene disponibilidad
+
+no conoce a los clientes
+
+no decide reglas de negocio
+
+📌 Reserva (concepto clave)
+
+Una reserva:
+
+vincula cliente ↔ recurso
+
+tiene un estado
+
+tiene un intervalo de tiempo
+
+puede cambiar de estado
+
+👉 La reserva es una relación, no un dato suelto.
+
+3️⃣ Estados de una reserva (obligatorios)
+
+Una reserva puede estar en uno y solo uno de estos estados:
+
+ACTIVA
+
+CANCELADA
+
+CONFIRMADA
+
+EXPIRADA
+
+📌 Reglas:
+
+no todos los estados permiten transición libre
+
+una reserva no se borra
+
+el estado define el comportamiento
+
+4️⃣ Reglas de negocio (importantes)
+📌 Crear reserva
+
+Una reserva puede crearse solo si:
+
+el recurso está disponible en ese intervalo
+
+el cliente no tiene otra reserva solapada del mismo tipo
+
+el intervalo es válido (inicio < fin)
+
+El estado inicial es ACTIVA.
+
+📌 Confirmar reserva
+
+Una reserva activa:
+
+puede confirmarse
+
+bloquea definitivamente el recurso
+
+ya no puede ser modificada
+
+📌 Cancelar reserva
+
+Una reserva:
+
+puede cancelarse si está ACTIVA
+
+no puede cancelarse si está CONFIRMADA
+
+no libera historial
+
+📌 Expirar reserva
+
+Una reserva:
+
+expira automáticamente si no se confirma antes de cierto tiempo
+
+una reserva expirada no se reactiva
+
+5️⃣ Reglas CLAVE (las que quiero ver bien diseñadas)
+
+❗ No se pregunta “si está reservada”
+
+❗ Se pregunta al estado
+
+❗ El recurso no guarda reservas activas
+
+❗ La lógica vive en la reserva
+
+❗ Los estados NO son booleans ni strings
+
+6️⃣ Lo que NO está definido a propósito
+
+(no lo resuelvas ahora)
+
+pagos
+
+penalizaciones
+
+prioridades
+
+listas de espera
+
+usuarios admin

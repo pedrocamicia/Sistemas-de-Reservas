@@ -1,0 +1,10 @@
+FUNCIONALIDADES:
+1) solicitar reserva -> listo
+2) condicion de reserva de tiempo -> listo
+3) saber si un recurso puede reservarse en un intervalo dado (parecido al anterior, lo hace desde reserva ya. pero ver si tengo que repetirlo igualmente o copiar ese codigo en recurso o que
+   
+
+REGLAS DE NEGOCIO:
+1) No todas las solicitudes pueden ser modificadas o canceladas una vez creadas.
+2) Existen situaciones en las que una solicitud deja de ser válida sin intervención directa del cliente.
+3) Las decisiones tomadas sobre una solicitud no siempre pueden revertirse. 
